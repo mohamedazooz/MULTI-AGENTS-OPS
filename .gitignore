@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# data
+*.db
+*.sqlite3
+data/
+var/
+.omnimcp/
+
+# credentials & secrets
+.env
+worker-credentials.json
+*.pem
+*.key
+
+# tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# node (future dashboard)
+node_modules/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,20 @@
+services:
+  control-plane:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      OMNIMCP_ENV: production
+      OMNIMCP_HOST: 0.0.0.0
+      OMNIMCP_STORAGE_ROOT: /var/lib/omnimcp/storage
+      OMNIMCP_WORKSPACE_ROOT: /var/lib/omnimcp/workspaces
+    volumes:
+      - omnimcp-data:/var/lib/omnimcp
+      - omnimcp-db:/app
+    restart: unless-stopped
+
+volumes:
+  omnimcp-data:
+  omnimcp-db:

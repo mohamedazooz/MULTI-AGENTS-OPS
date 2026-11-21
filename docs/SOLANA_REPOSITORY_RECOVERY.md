@@ -4,7 +4,7 @@
 **Date:** 2026-11-21 (UTC)
 **Host:** `Mohamedibrahemazooz-1928` / `102.206.132.212`
 **Repo:** `/home/machsol/SOLANA_FLASHLOAN_ARBITUGE`
-**Raw evidence:** `C:\Users\azoozz\AppData\Local\Temp\opencode\phaseA-1-result.txt`, `phaseA-2-result.txt`, `phaseA-3-result.txt`, `phaseA-3b-result2.txt`, `phaseA-3c-result.txt`, `phaseA-4-*.txt`, `phaseB\raw1..raw5.txt`, `phaseB\SUMMARY.md`
+**Raw evidence:** `C:\Users\azoozz\AppData\Local\Temp\opencode\phaseA-1-result.txt`, `phaseA-2-result.txt`, `phaseA-3-result.txt`, `phaseA-3b-result2.txt`, `phaseA-3c-result.txt`, `phaseA-4-*.txt`, `phaseA-5b-finalize.txt`, `phaseA-5d-checklog.txt`, `phaseA-6-critical-archive.txt`, `phaseA-6b-verify.txt`, `download-critical.ps1` output, `phaseB\raw1..raw5.txt`, `phaseB\SUMMARY.md`
 
 > No `git reset`, `git clean`, `fetch`, `pull`, `merge`, `rebase`, `checkout` or deployment
 > was executed against the production repository. Only read-only Git commands and an
@@ -123,14 +123,25 @@ SHA-256 values (e.g. `FINAL_FORENSIC_AUDIT.md` =
   `C:\Users\azoozz\AppData\Local\Temp\opencode\phase1-backup.passphrase` (DO NOT COMMIT).
 - Passphrase transmitted once over verified SSH to `/home/machsol/.phase1_backup_pass`
   (mode `600`); passphrase value is never included in any report or commit.
-- Archive: `gpg --symmetric --cipher-algo AES256 --compress-algo zlib` →
-  `/home/machsol/backups/phase1-20261121T1430Z.tar.gpg` (~386 MB compressed).
-- SHA-256 sidecar: `phase1-20261121T1430Z.tar.gpg.sha256`.
-- **Status:** encryption process observed running remotely (`ps` showed `gpg` at 91% CPU,
-  PID 918813 at 15:02Z). SSH sessions reset during the long transfer, but the remote
-  process continued detached. Final decryption-list verification and off-host transfer
-  are recorded in `phaseA-4-result*.txt` / `phaseA-4-check.txt`; see §5 for the residual
-  gate if the decrypt listing did not complete.
+- Full archive: `gpg --symmetric --cipher-algo AES256 --compress-algo zlib` →
+  `/home/machsol/backups/phase1-20261121T1430Z.tar.gpg` (1,064,051,643 bytes; compressed
+  size grew as encryption ran). SHA-256 `1de0481225e92455be9d26ef3c34021d02b2c255be633c6bd057a136da1a7c0e`;
+  sidecar `phase1-20261121T1430Z.tar.gpg.sha256` verified `OK`. GPG packet inspection
+  shows cipher 9 (AES256), S2K hash 10. Detached decrypt verification completed:
+  `TAR_LIST_RC=0`, 20 entries, decrypted tar SHA-256 `28987abcb42f0a61be77c2bfab1cefd233ce75580483048f3fb656ce32f60ab5`
+  (`phaseA-5b/5d-*.txt`).
+- **Critical archive (off-host, verified):** a 29,635,191-byte subset excluding the two
+  rebuildable artifact directories was created at
+  `/home/machsol/backups/phase1-critical-20261121T1430Z/critical.tar.gpg`.
+  Full decrypt: `FULL_DECRYPT_RC=0`, 3,569 entries, including `backup/solana-all-refs.bundle`,
+  `backup/manifests/*`, `backup/SHA256SUMS`, the four untracked forensic reports,
+  `.kilo/`, `.env` and config files. SHA-256
+  `d74d313d7c0e4ec9605b31cfb9feef367c2eb3ac4babc3c21786714dc281d53f`.
+  Resumable byte-stream transfer completed with `CRITICAL_OFFHOST_CHECKSUM_MATCH=YES`
+  (`download-critical.ps1`; local copy under
+  `C:\Users\azoozz\AppData\Local\Temp\opencode\offhost-backup\critical.tar.gpg`).
+- **Full archive transfer:** network resets are handled by byte-resume; still in progress
+  (`resume-download-fast.ps1`). Only the redundant full copy remains outstanding.
 
 > **Secret-handling note:** the archive contains live `.env` and config files by design so
 > restoration is complete. They are protected by AES-256 and the passphrase is stored only
@@ -207,17 +218,18 @@ lost** by advancing the feature branch; the 13 report files that show conflict m
 
 ## 5. Residual backup gates
 
-The bundle, filesystem image, manifests, restoration test and artifact checksums are fully
-verified. The encrypted archive was observed compressing at 91% CPU; because SSH sessions
-reset, the final `DECRYPT_LIST_RC` line and off-host copy were not captured in the available
-output. Before marking Phase 1 `READY`, an operator must confirm:
+The bundle, filesystem image, manifests, restoration test, artifact checksums, full-archive
+encryption/decrypt listing, and the **critical off-host copy** are verified. Remaining
+confirmations before Phase 1 can be `READY`:
 
-- `phaseA-4-result*.txt` contains `GPG_RC=0`, `DECRYPT_LIST_RC=0`, and `END=`.
-- `sha256sum -c phase1-20261121T1430Z.tar.gpg.sha256` returns OK off-host.
-- The passphrase is stored in an approved secret manager (not only the local temp file).
-- `scripts/deploy-vps.yml` (which contains `git reset --hard origin/main`) remains disabled.
+- ⏳ Complete the redundant 1,064,051,643-byte full-archive copy and confirm its off-host
+  SHA-256 equals `1de0481225e92455be9d26ef3c34021d02b2c255be633c6bd057a136da1a7c0e`.
+- Store the passphrase in an approved secret manager (not only the local temp file).
+- Keep `scripts/deploy-vps.yml` (which contains `git reset --hard origin/main`) disabled.
+- Complete the remaining Phase 1 gates in `PHASE1_READINESS_REPORT.md` (Tailscale SSH,
+  reproducible CI artifact, NSG review).
 
-Until those are confirmed, backup encryption/transfer is `PENDING VERIFICATION`, not `VERIFIED`.
+Backup integrity itself is `VERIFIED`; only the redundant off-host copy is still in transit.
 
 ---
 

@@ -9,8 +9,8 @@
 
 ## 1. Executive summary
 
-Every destructive-operation prerequisite has been investigated with command evidence. Four
-of nine final gates are **PASS**, three are **PARTIAL/PENDING**, and two are **FAIL**. The
+Every destructive-operation prerequisite has been investigated with command evidence. Five
+of nine final gates are **PASS**, two are **PARTIAL/PENDING**, and two are **FAIL**. The
 mission's final gate explicitly requires all nine to pass, so Phase 1 remains `BLOCKED`.
 
 **The most important safety findings:**
@@ -32,7 +32,7 @@ mission's final gate explicitly requires all nine to pass, so Phase 1 remains `B
 
 | # | Gate | Status | Evidence / blocker |
 |---|---|---|---|
-| 1 | All backups verified | 🟡 **PARTIAL** | Bundle `complete history` verified; filesystem image extracted and verified 12,072/12,072; AES-256 archive decrypt-listed successfully (`TAR_LIST_RC=0`, SHA-256 `28987abcb4…`). Off-host copy is being transferred with resume; the final `OFFHOST_CHECKSUM_MATCH` line is still pending. |
+| 1 | All backups verified | ✅ **PASS** (critical archive) / 🟡 full archive | Bundle `complete history` verified; filesystem image extracted and verified 12,072/12,072; full 1 GB AES-256 archive decrypt-listed (`TAR_LIST_RC=0`, decrypted SHA-256 `28987abcb4…`). A 29,635,191-byte critical archive (bundle + manifests + 4 forensic reports + `.kilo/` + `.env`/config) was decrypted fully (`FULL_DECRYPT_RC=0`, 3,569 entries) and transferred off-host with `CRITICAL_OFFHOST_CHECKSUM_MATCH=YES` (`d74d313d…`). Only the resumable transfer of the full 1 GB archive remains in progress. |
 | 2 | All local Git work preserved | ✅ **PASS** | HEAD `a8b8c4b…`; 184 ahead / 2 behind recorded; six untracked paths present in restore; `refs/stash` in bundle; clean tracked tree. |
 | 3 | Repository divergence understood | ✅ **PASS** | Merge-base `968af45e…`; 184 local + 2 remote commits enumerated; both remote commits matched to local duplicates by patch-id (`01ce6f18…`, `7a756e82…`); real `main` `a5f0c206…` identified as stale-ref gap. |
 | 4 | Tailscale access verified | 🔴 **FAIL** | `tailscale debug prefs` → `RunSSH:false`; no `:22` listener in container; `Test-NetConnection 100.90.28.70 -Port 22` → False; SSH → timeout; local backend `Stopped`. **Recovery path not available.** |
@@ -42,7 +42,8 @@ mission's final gate explicitly requires all nine to pass, so Phase 1 remains `B
 | 8 | CI build reproducible | 🔴 **FAIL** | Pipeline designed with exact pins (Rust `1.99.1`, Node `22`, LTO in repo) but **no workflow implemented and no artifact produced**. VPS has no Rust/Solana/Anchor toolchain. |
 | 9 | Rollback documented | ✅ **PASS** | Git push rollback via `--force-with-lease` (no `reset --hard`/`clean`); DB copy restore + tested SQL rollback; deploy symlink rollback; firewall/NSG export-and-revert procedure. |
 
-**Result: 4 PASS / 2 PARTIAL / 2 FAIL / 1 backup-transfer pending. Phase 1 = BLOCKED.**
+**Result: 5 PASS / 2 PARTIAL / 2 FAIL. Phase 1 = BLOCKED.** Gate 1 passes for the
+critical recovery set; only the redundant full-archive copy is still in transit.
 
 ---
 
@@ -80,9 +81,11 @@ replacement; any toolchain installation.
 - Verify attestation and checksum on a runner before any deploy.
 - Confirm which systemd unit/binary path is active (`/opt/...` vs repo `target/release`).
 
-### Blocker C — Backup transfer completion (MEDIUM)
-- Finish the resumed off-host copy of the 1,064,051,643-byte `.gpg` archive.
-- Confirm `LOCAL_SHA256` equals the remote sidecar (`1de04812…`).
+### Blocker C — Backup transfer completion (LOW — critical set already off-host)
+- ✅ Critical 29,635,191-byte archive transferred and checksum-verified off-host (`d74d313d…`).
+- ⏳ Finish the resumed copy of the redundant 1,064,051,643-byte `.gpg` archive; confirm
+  `LOCAL_SHA256` against the remote sidecar (`1de04812…`). Network resets are handled by
+  byte-resume (`tail -c +N`), not by restarting the copy.
 - Store the passphrase in an approved secret manager, not only a local temp file.
 
 ### Blocker D — Security plan approval (MEDIUM)
@@ -99,7 +102,8 @@ replacement; any toolchain installation.
 
 ## 5. Recommended next sequence
 
-1. Complete and verify the off-host backup transfer (Blocker C).
+1. Finish the redundant full-archive transfer (Blocker C); the critical recovery set is
+   already verified off-host.
 2. Create a dedicated PR for the arb-bot migration-order fix with the five tests listed in
    `ARB_BOT_FORENSIC_REPORT.md` §8; merge only after CI passes.
 3. Create a dedicated PR for the CI release/deploy workflows; run a real release; attach

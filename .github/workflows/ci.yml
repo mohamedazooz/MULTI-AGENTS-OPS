@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install ruff
+      - run: ruff check backend worker
+
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      OMNIMCP_SECRET_KEY: ci-not-a-production-secret
+      OMNIMCP_ENV: development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      # Backend E2E tests drive a real worker agent, so the worker package
+      # must be installed alongside the backend.
+      - run: pip install -e './backend[dev]' -e './worker[dev]'
+      - name: Backend tests
+        run: cd backend && python -m pytest tests -q
+      - name: Worker tests
+        run: cd worker && python -m pytest tests -q

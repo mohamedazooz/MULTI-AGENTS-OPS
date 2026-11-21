@@ -20,7 +20,9 @@
 ## Current branch and commit
 
 - Control-plane repository: `mohamedazooz/MULTI-AGENTS-OPS`.
-- Working branch for this handoff: `docs/phase0-infrastructure-baseline` (based on `origin/main`, PR pending).
+- Working branch for this handoff: `docs/phase0-infrastructure-baseline` (based on `origin/main`).
+- Published as [PR #3](https://github.com/mohamedazooz/MULTI-AGENTS-OPS/pull/3) (OPEN, mergeable, base `main`).
+- Commit on that branch: `1bcfb7e` — `docs: add Phase 0 infrastructure baseline and read-only audit script`.
 - Upstream Solana repository: `mohamedazooz/SOLANA_FLASHLOAN_ARBITUGE`, branch `main`.
 - Latest observed upstream commit: `a5f0c2068ddc1f76273bda7f4785fa26d88b4f30` (verified merge, 2026-11-21T13:29:57Z).
 - An earlier HEAD `0fb477090831d9fbfdbc9ce2304745f94de9a8f1` was observed during the same session — the repository is actively changing.
@@ -36,7 +38,9 @@ Phase 0 (infrastructure discovery). Acceptance criteria are **not** satisfied be
 - SSH key authentication: **failed** (`Permission denied (publickey,password)`).
 - TLS handshake attempts: **failed** (client SChannel error + server TLS `InternalError`).
 - Repository reads (`git ls-remote`, GitHub API, raw files): passed.
-- Rust build/test/clippy: **not executed** (no shell, no checkout).
+- PowerShell parse check of `infrastructure/scripts/phase0-audit.ps1`: passed (369 tokens, no syntax errors).
+- GitHub Actions on PR #3 (run `44909947869`): `lint` **pass** (7s), `tests` **pass** (1m14s).
+- Rust build/test/clippy on the VPS: **not executed** (no shell, no checkout).
 
 ## Outstanding failures
 

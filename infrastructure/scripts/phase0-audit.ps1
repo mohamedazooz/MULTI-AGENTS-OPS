@@ -6,11 +6,11 @@
     firewall/SSH/proxy config, restarts services, or runs Docker commands that
     mutate state. Config dumps are redacted before being written locally.
 .EXAMPLE
-    .\phase0-audit.ps1 -Host 102.206.132.212 -User machsol -KeyPath "$env:USERPROFILE\.ssh\id_ed25519_solana_hft"
+    .\phase0-audit.ps1 -RemoteHost 102.206.132.212 -User machsol -KeyPath "$env:USERPROFILE\.ssh\id_ed25519_solana_hft"
 #>
 [CmdletBinding()]
 param(
-  [string]$Host = '102.206.132.212',
+  [string]$RemoteHost = '102.206.132.212',
   [string]$User = 'machsol',
   [string]$KeyPath = (Join-Path $env:USERPROFILE '.ssh\id_ed25519'),
   [string]$OutDir = (Join-Path $env:TEMP 'opencode\phase0-raw')
@@ -118,11 +118,14 @@ foreach ($s in $sections) {
   $out = @()
   $out += '===== SECTION ' + $s.n + ' ====='
   $out += ('RUN_UTC: ' + (Get-Date).ToUniversalTime().ToString('o'))
-  $out += ('TARGET: ' + $User + '@' + $Host)
-  $out += (ssh @sshCommon "$User@$Host" $s.c 2>&1)
+  $out += ('TARGET: ' + $User + '@' + $RemoteHost)
+  # Normalize here-string line endings: remote bash must receive LF only.
+  $cmd = ($s.c -replace "`r`n", "`n")
+  $out += (ssh @sshCommon "$User@$RemoteHost" $cmd 2>&1)
   $out += ''
   $out | Set-Content -Path (Join-Path $OutDir ($s.n + '.txt'))
   Write-Host ('captured ' + $s.n)
+  Start-Sleep -Milliseconds 500
 }
 
 Write-Host ("DONE — raw output in: " + $OutDir)

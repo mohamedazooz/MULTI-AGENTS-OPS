@@ -1,72 +1,95 @@
 # Handoff
 
-**Status:** `BLOCKED`
+**Status:** `PHASE 0 VERIFIED`
 **Date:** 2026-11-21 (UTC)
-**Phase:** 0 — Infrastructure discovery
+**Phase:** 0 — Infrastructure discovery (complete)
 
 ---
 
 ## What has been completed
 
-- Read-only local environment assessment (SSH client, Tailscale CLI, PowerShell, key inventory).
-- External port/protocol map for `102.206.132.212` and `100.90.28.70`.
-- Confirmed Caddy `308 → HTTPS` on public `:80`; nginx `401` Basic Auth on tailnet `:3000`; nginx `400` on tailnet `:3001`.
-- Confirmed tailnet peer `sovereign-pc` (`100.90.28.70`) is online but SSH `:22` is filtered.
-- Confirmed public SSH `:22` is open but the local key is rejected; password auth is offered.
-- Verified the target GitHub repository, default branch, latest commit, branch list, pinned Rust 1.99.1 toolchain, CI commands and deploy workflow.
-- Wrote `docs/INFRASTRUCTURE_BASELINE.md`, `docs/IMPLEMENTATION_STATUS.md`, `docs/ARCHITECTURE.md`, and the read-only audit script.
-- **No VPS file, service, firewall, SSH config, proxy config, or Docker state was changed.**
+- New Ed25519 key generated on Windows at `D:\MY SSH KEY\machsol_102.206.132.212\`
+  (fingerprint `SHA256:l0VaUrLdmnoe34vd5STIhEhlu5V5Wf+ZypDsN7fqM8I`); only the public half was
+  installed on the VPS. Key-only SSH login verified.
+- Fixed two defects in `infrastructure/scripts/phase0-audit.ps1` (`-Host` colliding with
+  PowerShell's `$Host`; CRLF sent to remote bash). Both copies now parse cleanly (385 tokens).
+- Ran the read-only audit in 13 sections plus a single-session fallback for the sections that
+  hit transient `Connection reset`; raw evidence in `%TEMP%\opencode\phase0-raw-real2\`.
+- **Measured** virtualization, OS, CPU, RAM, swap, disk, network, firewall, listeners, services,
+  processes, Docker containers, proxy configs, tool versions, on-host git state and TLS.
+- Resolved the TLS anomaly: correct SNI is `102.206.132.212.sslip.io` (valid Let's Encrypt cert
+  to 2027-02-01); IP-SNI handshake failure is expected.
+- Rewrote `docs/INFRASTRUCTURE_BASELINE.md` as a `VERIFIED` report; updated topology and status.
+- **No VPS file, service, firewall, SSH config, proxy config, or Docker state was changed.** No
+  git operation, build, package install or service restart was performed on the host.
 
 ## Current branch and commit
 
 - Control-plane repository: `mohamedazooz/MULTI-AGENTS-OPS`.
-- Working branch for this handoff: `docs/phase0-infrastructure-baseline` (based on `origin/main`).
-- Published as [PR #3](https://github.com/mohamedazooz/MULTI-AGENTS-OPS/pull/3) (OPEN, mergeable, base `main`).
-- Commit on that branch: `1bcfb7e` — `docs: add Phase 0 infrastructure baseline and read-only audit script`.
-- Upstream Solana repository: `mohamedazooz/SOLANA_FLASHLOAN_ARBITUGE`, branch `main`.
-- Latest observed upstream commit: `a5f0c2068ddc1f76273bda7f4785fa26d88b4f30` (verified merge, 2026-11-21T13:29:57Z).
-- An earlier HEAD `0fb477090831d9fbfdbc9ce2304745f94de9a8f1` was observed during the same session — the repository is actively changing.
+- Working branch: `docs/phase0-infrastructure-baseline` (based on `origin/main`).
+- Published as [PR #3](https://github.com/mohamedazooz/MULTI-AGENTS-OPS/pull/3) (OPEN, mergeable,
+  base `main`).
+- Commits on branch: `1bcfb7e` (initial baseline), `e7c1820` (PR/CI evidence), plus this
+  verification update.
+- Upstream Solana repository: `mohamedazooz/SOLANA_FLASHLOAN_ARBITUGE`, `main` observed at
+  `a5f0c2068ddc1f76273bda7f4785fa26d88b4f30` (2026-11-21T13:29:57Z).
+- **On the VPS** the Solana repo is on `feat/meteora-dlmm-swap2-atomic-cpi`, HEAD
+  `a8b8c4bb95fef505ae7a3e4ce6c551230ab042e7`, **ahead 184 / behind 2** with untracked reports.
 
 ## Current phase
 
-Phase 0 (infrastructure discovery). Acceptance criteria are **not** satisfied because the host-internal audit could not run.
+Phase 0 is complete: all acceptance criteria met. Overall project remains `NOT STARTED` —
+discovery only, no implementation or deployment.
+
+## Measured facts (headline)
+
+- Azure Hyper-V VM; Ubuntu 24.04.4 LTS; kernel `7.0.0-1014-azure`.
+- 2 vCPU Intel Xeon Gold 6138 @ 2.00GHz; **3.8 GiB RAM (1.7 GiB available)**; 4 GiB swap
+  (2 GiB used); 67 GiB ext4 root with 32 GiB free (51%); 14% inode use.
+- UFW **inactive**; passwordless sudo **YES**; `machsol` in `sudo`, `docker`, `lxd` groups.
+- 17 running Docker containers, incl. Caddy (publishes 80/443), a desktop container, kilo-control
+  stack and roomote stack; Docker socket proxy present internally.
+- Host nginx :8080 proxies to Caddy with SNI `102.206.132.212.sslip.io`; TLS cert valid.
+- Rust/Solana/Anchor **not installed**; Node v20.20.2 (repo needs 22); Python 3.12.3; git 2.43.0.
+- `arb-bot.service` **enabled but crash-looping** with a SQLite migration error
+  (`no such column: provenance`) and a failing `ExecStopPost` script. Pre-existing; untouched.
 
 ## Tests executed
 
-- Network reachability probes: passed.
-- HTTP header probes: passed.
-- SSH key authentication: **failed** (`Permission denied (publickey,password)`).
-- TLS handshake attempts: **failed** (client SChannel error + server TLS `InternalError`).
-- Repository reads (`git ls-remote`, GitHub API, raw files): passed.
-- PowerShell parse check of `infrastructure/scripts/phase0-audit.ps1`: passed (369 tokens, no syntax errors).
-- GitHub Actions on PR #3 (run `44909947869`): `lint` **pass** (7s), `tests` **pass** (1m14s).
-- Rust build/test/clippy on the VPS: **not executed** (no shell, no checkout).
+- SSH key-only authentication: **passed**.
+- Read-only audit script (after fixes): **passed**; 13 sections captured.
+- Single-session fallback for transient SSH resets: **passed**.
+- TLS handshake with correct SNI: **passed**; certificate chain identified.
+- PowerShell parse check of audit script (both copies): **passed** (385 tokens).
+- GitHub Actions on PR #3: `lint` **pass**, `tests` **pass** (both runs; latest run
+  `44910206789`: lint 10s, tests 1m3s).
+- Rust build/test/clippy on the VPS: **not executed** (toolchain absent, no approval).
 
-## Outstanding failures
+## Outstanding decisions (not failures)
 
-1. No authorized SSH credential for `machsol`; no host shell.
-2. Tailnet SSH port 22 unreachable.
-3. HTTPS handshake cannot be completed from this Windows client.
-4. Virtualization, CPU, RAM, disk, services, firewall, proxies, tool versions and Docker state all unverified.
+1. Admin path: tailnet-only SSH vs. public key-only with source allowlist.
+2. Capacity: only 1.7 GiB RAM available — decide build host / container cleanup before builds.
+3. `arb-bot` crash-loop remediation (diagnosis first, no blind restart).
+4. Preserve the 184 local commits and untracked reports on the VPS before any git operation.
 
 ## Known risks
 
-- Disclosed private key must be considered compromised; local `azoozz-vps` key status unconfirmed and not authorized.
-- Password authentication on public SSH remains enabled.
-- Existing `deploy-vps.yml` performs `git reset --hard origin/main` — must be approval-gated.
-- Resource headroom is unmeasured; no new services should be installed yet.
-- Repository contains config templates and forensic artifacts; run secret scanning before workspace copy.
+- `machsol` has passwordless sudo and Docker-group (≈root) privileges; agents must use a new
+  unprivileged user.
+- Public SSH still offers password auth; UFW inactive; fail2ban is running.
+- `deploy-vps.yml` uses `git reset --hard origin/main` and would destroy VPS work — never trigger.
+- Docker socket proxy and desktop container already exist; never expose their interfaces to agents.
+- Existing forensic reports/config templates require secret scanning before any workspace copy.
 
 ## Next exact action
 
-1. Human: generate a fresh Ed25519 key on Windows (e.g. `id_ed25519_solana_hft`) and install **only the public key** into `~machsol/.ssh/authorized_keys` via provider console. Keep the console session open.
-2. Agent: verify key-based SSH read-only, then run `infrastructure/scripts/phase0-audit.ps1`.
-3. Agent: update `docs/INFRASTRUCTURE_BASELINE.md` with measured facts and change Phase 0 status to `VERIFIED` only when all Phase 0 acceptance criteria pass.
-4. Agent: present Phase 1 plan for approval; make no system-level change before approval.
+1. Human: confirm retirement of the old key; choose admin path; decide the build-capacity option.
+2. Agent: back up the VPS repo (approval required), diagnose the `arb-bot` DB mismatch read-only,
+   and prepare a remediation patch/PR — no host mutation.
+3. Agent: add rollback/recovery steps to `docs/OPERATIONS.md` before any SSH/firewall/service edit.
 
 ## Required human approvals
 
-- New administrative key generation and installation.
-- Choice of admin path (tailnet-only SSH vs. public key-only + allowlist).
-- Any firewall, SSH, reverse-proxy, service, package, or Docker modification.
-- Confirmation of the on-VPS repository location and preservation of uncommitted work.
+- Any firewall, SSH, reverse-proxy, service, package, Docker or git operation on the VPS.
+- Any decision to stop/decommission an existing container or to install a toolchain.
+- Confirmation that the 184 local commits and untracked reports must be preserved.

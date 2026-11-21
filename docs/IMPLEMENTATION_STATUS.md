@@ -94,7 +94,7 @@ Legend: ✅ Implemented+Tested · 🟡 Partially implemented · 🔴 Not impleme
 - worker: **10 passed**
 - lint: `ruff check backend worker` — clean
 
-## Infrastructure discovery — Solana HFT VPS (Phase 0, `BLOCKED`)
+## Infrastructure discovery — Solana HFT VPS (Phase 0, `VERIFIED`)
 
 This section records a separate work stream: discovery of the existing Ubuntu VPS intended to
 host the Solana Flashloan Arbitrage workspace and this control plane. It is **not** a claim that
@@ -102,17 +102,21 @@ deployment happened. See [INFRASTRUCTURE_BASELINE.md](INFRASTRUCTURE_BASELINE.md
 
 | Item | Status | Evidence |
 |---|---|---|
-| Local tooling / Tailnet peer discovery | ✅ | OpenSSH 9.5p2, Tailscale 1.104.7; `sovereign-pc` online |
-| Public/tailnet port & protocol map | ✅ | Caddy `308`; nginx 1.28.3 `401` (tailnet :3000) and `400` (tailnet :3001) |
-| SSH authentication | ⛔ | `Permission denied (publickey,password)` — local key not authorized |
-| Tailnet SSH :22 | ⛔ | filtered/timeout |
-| HTTPS TLS handshake from Windows client | ⛔ | local `SEC_E_INTERNAL_ERROR`; remote TLS alert `InternalError` |
-| Virtualization / CPU / RAM / disk / cgroup limits | ⛔ | unknown — no authenticated shell |
-| Services, firewall, proxy config, Docker state | ⛔ | unknown — no authenticated shell |
-| Installed Rust/Solana/Anchor/Node/Python versions | ⛔ | unknown — no authenticated shell |
-| Read-only audit script prepared | ✅ | [`infrastructure/scripts/phase0-audit.ps1`](../infrastructure/scripts/phase0-audit.ps1) (syntax-checked, not executed against host) |
-| Target repo / toolchain / CI commands verified | ✅ | `SOLANA_FLASHLOAN_ARBITUGE@main` `a5f0c206…`; Rust **1.99.1** pinned, edition 2024; feature-gated CI |
-| Deployment workflow risk identified | ✅ | `deploy-vps.yml` uses `git reset --hard origin/main` — must be approval-gated |
+| New authorized Ed25519 key + key-only SSH | ✅ | `SHA256:l0VaUrL…`; login verified with `BatchMode=yes` |
+| Virtualization / OS / kernel | ✅ | Hyper-V VM; Ubuntu 24.04.4 LTS; `7.0.0-1014-azure` |
+| CPU / RAM / swap / disk | ✅ | 2 vCPU Xeon Gold 6138; 3.8 GiB RAM (1.7 GiB avail); 4 GiB swap (2 GiB used); 67 GiB root, 32 GiB free |
+| Firewall / listeners | ✅ | UFW inactive; `ss -lntup` captured; SSH on `0.0.0.0:22` |
+| Services / containers / processes | ✅ | 30 systemd services; 17 running Docker containers; top-RSS captured |
+| Proxy config | ✅ | Host nginx valid; `:8080` → container Caddy; Caddy lives in `roomote-caddy-1` |
+| HTTPS TLS | ✅ | Valid LE cert for `102.206.132.212.sslip.io`; earlier failure was wrong SNI |
+| Installed tool versions | ✅ | Rust/Solana/Anchor absent; Node 20.20.2 (needs 22); Python 3.12.3; git 2.43.0 |
+| On-VPS git state | ✅ | Solana repo on feature branch, **ahead 184 / behind 2**, untracked reports present |
+| `arb-bot.service` state | ⚠️ | Enabled but **crash-looping** (SQLite `no such column: provenance`); pre-existing, untouched |
+| Read-only audit script | ✅ | [`infrastructure/scripts/phase0-audit.ps1`](../infrastructure/scripts/phase0-audit.ps1) — fixed (`-RemoteHost`, LF normalization), executed successfully |
+| Target repo / toolchain / CI commands | ✅ | `SOLANA_FLASHLOAN_ARBITUGE@main` `a5f0c206…`; Rust **1.99.1** pinned, edition 2024; feature-gated CI |
+| Deployment workflow risk | ✅ | `deploy-vps.yml` uses `git reset --hard origin/main` — must be approval-gated |
+| System-level changes on VPS | ✅ none | No install, restart, firewall/SSH/proxy/Docker or git mutation |
 
-**Phase 0 status: `BLOCKED`** — requires a newly generated, authorized Ed25519 key installed via
-provider console. No system-level change was made. **Overall project status: `NOT STARTED`.**
+**Phase 0 status: `VERIFIED`** — host audit complete with no system change. Remaining work is
+approval-gated (admin path, capacity decision, `arb-bot` triage, repo backup).
+**Overall project status: `NOT STARTED`.**

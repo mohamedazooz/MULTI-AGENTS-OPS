@@ -75,3 +75,12 @@ SHA-256 computed inline ([STORAGE_DESIGN.md](docs/STORAGE_DESIGN.md)).
 
 See [ADR index](adr/): modular monolith (0001), SQLite-default DB (0002), worker pull model
 (0003), Alembic deferred (0004), MCP SDK pinned to 1.x (0005).
+
+## Deployment topology (proposed — not implemented)
+
+The host-level trust-zone design for the existing VPS is recorded separately in
+[INFRASTRUCTURE_TOPOLOGY.md](INFRASTRUCTURE_TOPOLOGY.md) and the measured/unknown facts in
+[INFRASTRUCTURE_BASELINE.md](INFRASTRUCTURE_BASELINE.md). In short: public `:443` only for
+the existing web app; SSH, code-server and the dashboard restricted to Tailscale; control-plane
+API, MCP gateway and SQLite bound to loopback; agents run as a non-root workspace user. Nothing
+in that topology has been deployed — Phase 0 is blocked on authorized SSH access.

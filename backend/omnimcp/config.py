@@ -52,8 +52,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     metrics_enabled: bool = True
 
-    # MCP server auth (empty = allow loopback-only unauthenticated access)
+    # MCP server auth. Bearer enforcement is active on /mcp when a token is set.
+    # When empty, unauthenticated requests are served only from loopback clients
+    # in non-production environments.
     mcp_token: str = ""
+    # Set true ONLY when an authenticated reverse proxy fronts /mcp (production).
+    mcp_unauthenticated_proxy: bool = False
 
     # In production, require admin auth for new registrations
     allow_open_registration: bool = False

@@ -20,6 +20,7 @@ from .config import settings
 from .db import create_all, dispose_engine, get_session_factory, init_engine
 from .errors import OmnicpError, omnicp_error_handler
 from .logging_setup import setup_logging
+from .mcp_auth import BearerAuthMiddleware
 from .mcp_server import build_mcp_asgi_app
 
 log = logging.getLogger("omnimcp.main")
@@ -83,10 +84,10 @@ async def lifespan(app: FastAPI):
     await bootstrap_admin()
     task = asyncio.create_task(scheduler_loop()) if settings.scheduler_enabled else None
     app.state.scheduler_task = task
-    mcp_app = build_mcp_asgi_app()
-    app.mount("/mcp", mcp_app)
+    inner_mcp = build_mcp_asgi_app()
+    app.mount("/mcp", BearerAuthMiddleware(inner_mcp))
     async with contextlib.AsyncExitStack() as stack:
-        await stack.enter_async_context(mcp_app.router.lifespan_context(mcp_app))
+        await stack.enter_async_context(inner_mcp.router.lifespan_context(inner_mcp))
         try:
             yield
         finally:

@@ -8,13 +8,12 @@ services:
     environment:
       OMNIMCP_ENV: production
       OMNIMCP_HOST: 0.0.0.0
+      OMNIMCP_DATABASE_URL: sqlite:////var/lib/omnimcp/omnimcp.db
       OMNIMCP_STORAGE_ROOT: /var/lib/omnimcp/storage
       OMNIMCP_WORKSPACE_ROOT: /var/lib/omnimcp/workspaces
     volumes:
       - omnimcp-data:/var/lib/omnimcp
-      - omnimcp-db:/app
     restart: unless-stopped
 
 volumes:
   omnimcp-data:
-  omnimcp-db:

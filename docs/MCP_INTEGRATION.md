@@ -19,23 +19,33 @@ Server: official MCP Python SDK (FastMCP), Streamable HTTP, mounted at `/mcp`
 Deliberate exclusions: no generic shell tool, no unbounded filesystem access — execution
 goes through jobs bounded by worker capabilities, resources and policy.
 
-## Authentication (status)
+## Authentication (enforced in-process)
 
-Tool calls currently run **without per-request bearer enforcement** (transport security
-settings from the SDK are active). Requirement: bind /mcp to a private interface or
-authenticated proxy until the in-process bearer verifier lands
-(THREAT_MODEL #10, Phase 8).
+Bearer enforcement is active on every `/mcp` request (closes THREAT MODEL #10):
+
+1. **Static shared token** — `Authorization: Bearer <OMNIMCP_MCP_TOKEN>` (constant-time compare).
+2. **User JWT** — a token issued by the REST auth API (active, non-revoked user).
+3. **Agent key** — an enabled agent's key from the agent registry.
+
+Without credentials, requests are served only from **loopback clients** and only in
+**non-production** environments. In production, configure `OMNIMCP_MCP_TOKEN`, or (only
+when an authenticated reverse proxy fronts `/mcp`) set
+`OMNIMCP_MCP_UNAUTHENTICATED_PROXY=true`. Unauthorized requests receive
+`401` with `WWW-Authenticate: Bearer`.
+
+Planned next step: OAuth 2.1 resource-server metadata (RFC 9728 / RFC 8707, MCP spec
+2026-07-28) so external MCP clients can discover the authorization server.
 
 ## Client compatibility matrix
 
 | Client | Transport | Status |
 |---|---|---|
-| Official Python MCP client (`streamablehttp_client`) | Streamable HTTP | ✅ tested E2E in CI |
+| Official Python MCP client (`streamablehttp_client`) | Streamable HTTP | ✅ tested E2E in CI (loopback, dev env) |
 | Claude Code / Codex / Gemini CLI / Roo Code / ChatGPT-connector | MCP HTTP | 🔴 **Not tested** — never advertise as supported until each is verified per phase 8 |
 | Any MCP 1.x client | Streamable HTTP | expected compatible, untested |
 
 ## Configuration example (generic MCP client)
 
 ```json
-{"mcpServers": {"omnimcp": {"url": "http://127.0.0.1:8000/mcp"}}}
+{"mcpServers": {"omnimcp": {"url": "http://127.0.0.1:8000/mcp", "headers": {"Authorization": "Bearer <token>"}}}}
 ```

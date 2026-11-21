@@ -79,6 +79,9 @@ See [WORKER_SETUP.md](docs/WORKER_SETUP.md).
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | Measurement policy (no invented numbers) |
 | [DEPENDENCY_MATRIX.md](docs/DEPENDENCY_MATRIX.md) | Evaluated OSS deps + licenses |
 | [docs/adr/](docs/adr/) | Architecture decision records |
+| [INFRASTRUCTURE_BASELINE.md](docs/INFRASTRUCTURE_BASELINE.md) | Verified/unknown facts about the target VPS (Phase 0) |
+| [INFRASTRUCTURE_TOPOLOGY.md](docs/INFRASTRUCTURE_TOPOLOGY.md) | Proposed host-level trust zones (not deployed) |
+| [HANDOFF.md](docs/HANDOFF.md) | Continuation record for the next agent |
 
 ## Layout
 

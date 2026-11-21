@@ -93,3 +93,26 @@ Legend: ✅ Implemented+Tested · 🟡 Partially implemented · 🔴 Not impleme
 - backend: **51 passed** (`pytest tests` incl. 4 live-server E2E)
 - worker: **10 passed**
 - lint: `ruff check backend worker` — clean
+
+## Infrastructure discovery — Solana HFT VPS (Phase 0, `BLOCKED`)
+
+This section records a separate work stream: discovery of the existing Ubuntu VPS intended to
+host the Solana Flashloan Arbitrage workspace and this control plane. It is **not** a claim that
+deployment happened. See [INFRASTRUCTURE_BASELINE.md](INFRASTRUCTURE_BASELINE.md) for full detail.
+
+| Item | Status | Evidence |
+|---|---|---|
+| Local tooling / Tailnet peer discovery | ✅ | OpenSSH 9.5p2, Tailscale 1.104.7; `sovereign-pc` online |
+| Public/tailnet port & protocol map | ✅ | Caddy `308`; nginx 1.28.3 `401` (tailnet :3000) and `400` (tailnet :3001) |
+| SSH authentication | ⛔ | `Permission denied (publickey,password)` — local key not authorized |
+| Tailnet SSH :22 | ⛔ | filtered/timeout |
+| HTTPS TLS handshake from Windows client | ⛔ | local `SEC_E_INTERNAL_ERROR`; remote TLS alert `InternalError` |
+| Virtualization / CPU / RAM / disk / cgroup limits | ⛔ | unknown — no authenticated shell |
+| Services, firewall, proxy config, Docker state | ⛔ | unknown — no authenticated shell |
+| Installed Rust/Solana/Anchor/Node/Python versions | ⛔ | unknown — no authenticated shell |
+| Read-only audit script prepared | ✅ | [`infrastructure/scripts/phase0-audit.ps1`](../infrastructure/scripts/phase0-audit.ps1) (syntax-checked, not executed against host) |
+| Target repo / toolchain / CI commands verified | ✅ | `SOLANA_FLASHLOAN_ARBITUGE@main` `a5f0c206…`; Rust **1.99.1** pinned, edition 2024; feature-gated CI |
+| Deployment workflow risk identified | ✅ | `deploy-vps.yml` uses `git reset --hard origin/main` — must be approval-gated |
+
+**Phase 0 status: `BLOCKED`** — requires a newly generated, authorized Ed25519 key installed via
+provider console. No system-level change was made. **Overall project status: `NOT STARTED`.**
